@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Update script metadata
         run: |
@@ -26,23 +26,12 @@ jobs:
           sed -i "s|@updateURL    .*|@updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2.4.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Skip Intro & Next Chapter Buttons ${{ github.ref }}
+          name: Skip Intro & Next Chapter Buttons ${{ github.ref }}
           draft: false
           prerelease: false
-
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./userscript/Skip-Intro-and-Next-Chapter-Buttons.js
-          asset_name: Skip-Intro-and-Next-Chapter-Buttons.js
-          asset_content_type: application/javascript
+          files: ./userscript/Skip-Intro-and-Next-Chapter-Buttons.js
