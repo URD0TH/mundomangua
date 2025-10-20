@@ -25,6 +25,16 @@ jobs:
           sed -i "s|// @downloadURL  .*|// @downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
           sed -i "s|// @updateURL    .*|// @updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 
+      - name: Commit updated script
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          git commit -m "Upgrade script to ${{ github.ref_name }}" || echo "No changes to commit"
+
+      - name: Push changes
+        run: git push
+
       - name: Create Release
         uses: softprops/action-gh-release@v2.4.1
         env:
