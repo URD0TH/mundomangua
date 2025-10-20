@@ -3,47 +3,63 @@ name: Release Userscript
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # Se dispara cuando se hace push de un tag que empiece con “v”, por ejemplo v1.2.3
 
 permissions:
-  contents: write
+  contents: write  # Permiso necesario para poder hacer push, crear releases, modificar contenido
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Usar un runner en Ubuntu
+
     steps:
-      - name: Checkout code
+      - name: Checkout target repository
         uses: actions/checkout@v4
+        with:
+          repository: URD0TH/mundomangua  # Clona ese repositorio
+          fetch-depth: 0  # Obtener todo el historial, tags, ramas
+
+      - name: Configure git user
+        run: |
+          # Configura usuario para los commits automáticos
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
 
       - name: Update script metadata
         run: |
+          # Extraer nombre del tag que disparó el workflow, ej. “v1.2.3”
           TAG_NAME=${{ github.ref_name }}
+          # Obtener la versión sin la “v” inicial, ej. “1.2.3”
           VERSION=${TAG_NAME#v}
-          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/Skip-Intro-and-Next-Chapter-Buttons.js"
+          # Construir la URL donde estará disponible el script como asset del release
+          DOWNLOAD_URL="https://github.com/URD0TH/mundomangua/releases/download/${TAG_NAME}/Skip-Intro-and-Next-Chapter-Buttons.js"
 
+          # Modificar dentro del script las líneas de metadata:
+          # @version, @downloadURL y @updateURL con los valores calculados
           sed -i "s|// @version      .*|// @version      ${VERSION}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
           sed -i "s|// @downloadURL  .*|// @downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
           sed -i "s|// @updateURL    .*|// @updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 
       - name: Commit updated script
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          # Añadir el archivo modificado al staging
           git add userscript/Skip-Intro-and-Next-Chapter-Buttons.js
-          git commit -m "Upgrade script to ${{ github.ref_name }}" || echo "No changes to commit"
+          # Hacer commit con el mensaje que indica la versión del tag
+          git commit -m "Update script to ${TAG_NAME} for release" || echo "No changes to commit"
+          # El “|| echo …” permite que el paso no falle si no hubo cambios (por ejemplo si ya estaba igual)
 
       - name: Push changes
         run: |
-          git fetch origin main
-          git push origin HEAD:main --force-with-lease
+          # Enviar el commit al repositorio remoto, a la rama principal
+          git push origin HEAD:main
 
       - name: Create Release
         uses: softprops/action-gh-release@v2.4.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Token automático para autenticarse
         with:
-          tag_name: ${{ github.ref }}
-          name: Skip Intro Buttons ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}  # El tag bajo el cual se crea el release
+          name: Skip Intro and Next Chapter Buttons ${{ github.ref_name }}  # Nombre del release
           draft: false
           prerelease: false
-          files: ./userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          files: userscript/Skip-Intro-and-Next-Chapter-Buttons.js  # Incluir el archivo modificado como asset
