@@ -31,7 +31,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          name: Skip Intro & Next Chapter Buttons ${{ github.ref }}
+          name: Skip Intro Buttons ${{ github.ref_name }}
           draft: false
           prerelease: false
           files: ./userscript/Skip-Intro-and-Next-Chapter-Buttons.js
