@@ -21,9 +21,9 @@ jobs:
           VERSION=${TAG_NAME#v}
           DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG_NAME}/Skip-Intro-and-Next-Chapter-Buttons.js"
 
-          sed -i "s/@version      .*/@version      ${VERSION}/" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
-          sed -i "s|@downloadURL  .*|@downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
-          sed -i "s|@updateURL    .*|@updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          sed -i "s|// @version      .*|// @version      ${VERSION}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          sed -i "s|// @downloadURL  .*|// @downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          sed -i "s|// @updateURL    .*|// @updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 
       - name: Create Release
         uses: softprops/action-gh-release@v2.4.1
