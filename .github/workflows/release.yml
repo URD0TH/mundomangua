@@ -1,9 +1,17 @@
 name: Release Userscript
 
 on:
-  push:
-    tags:
-      - 'v*'  # Se dispara cuando se hace push de un tag que empiece con “v”, por ejemplo v1.2.3
+  workflow_dispatch:  # Ejecución manual desde la UI de GitHub
+    inputs:
+      tag_name:
+        description: 'Tag de versión (ej: v1.2.3)'
+        required: true
+        type: string
+      create_tag:
+        description: 'Crear el tag si no existe'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write  # Permiso necesario para poder hacer push, crear releases, modificar contenido
@@ -14,25 +22,53 @@ jobs:
 
     steps:
       - name: Checkout target repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: URD0TH/mundomangua  # Clona ese repositorio
           fetch-depth: 0  # Obtener todo el historial, tags, ramas
 
       - name: Configure git user
         run: |
-          # Configura usuario para los commits automáticos
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
+          # Configura usuario para los commits automáticos (formato recomendado por GitHub)
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+      - name: Create tag if requested
+        if: ${{ inputs.create_tag }}
+        run: |
+          TAG_NAME=${{ inputs.tag_name }}
+          # Verificar si el tag ya existe
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "⚠️  El tag $TAG_NAME ya existe"
+          else
+            echo "✅ Creando tag $TAG_NAME"
+            git tag "$TAG_NAME"
+            git push origin "$TAG_NAME"
+          fi
+
+      - name: Verify tag exists
+        run: |
+          TAG_NAME=${{ inputs.tag_name }}
+          # Verificar que el tag existe (ya sea porque se creó o porque ya existía)
+          if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "❌ Error: El tag $TAG_NAME no existe. Usa la opción 'create_tag' para crearlo."
+            exit 1
+          fi
+          echo "✅ Tag $TAG_NAME verificado"
 
       - name: Update script metadata
         run: |
-          # Extraer nombre del tag que disparó el workflow, ej. “v1.2.3”
-          TAG_NAME=${{ github.ref_name }}
-          # Obtener la versión sin la “v” inicial, ej. “1.2.3”
+          # Usar el tag del input en lugar de github.ref_name
+          TAG_NAME=${{ inputs.tag_name }}
+          # Obtener la versión sin la "v" inicial, ej. "1.2.3"
           VERSION=${TAG_NAME#v}
           # Construir la URL donde estará disponible el script como asset del release
           DOWNLOAD_URL="https://github.com/URD0TH/mundomangua/releases/download/${TAG_NAME}/Skip-Intro-and-Next-Chapter-Buttons.js"
+
+          echo "📝 Actualizando metadata del script..."
+          echo "   Tag: $TAG_NAME"
+          echo "   Versión: $VERSION"
+          echo "   URL: $DOWNLOAD_URL"
 
           # Modificar dentro del script las líneas de metadata:
           # @version, @downloadURL y @updateURL con los valores calculados
@@ -40,26 +76,64 @@ jobs:
           sed -i "s|// @downloadURL  .*|// @downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
           sed -i "s|// @updateURL    .*|// @updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 
+          # Validar que los cambios se aplicaron correctamente
+          echo ""
+          echo "🔍 Validando cambios aplicados..."
+          if grep -q "// @version      ${VERSION}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
+            echo "✅ @version actualizado correctamente"
+          else
+            echo "❌ Error: No se pudo actualizar @version"
+            exit 1
+          fi
+
+          if grep -q "// @downloadURL  ${DOWNLOAD_URL}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
+            echo "✅ @downloadURL actualizado correctamente"
+          else
+            echo "❌ Error: No se pudo actualizar @downloadURL"
+            exit 1
+          fi
+
+          if grep -q "// @updateURL    ${DOWNLOAD_URL}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
+            echo "✅ @updateURL actualizado correctamente"
+          else
+            echo "❌ Error: No se pudo actualizar @updateURL"
+            exit 1
+          fi
+
+          echo ""
+          echo "✅ Todas las validaciones pasaron exitosamente"
+
       - name: Commit updated script
         run: |
+          TAG_NAME=${{ inputs.tag_name }}
           # Añadir el archivo modificado al staging
           git add userscript/Skip-Intro-and-Next-Chapter-Buttons.js
           # Hacer commit con el mensaje que indica la versión del tag
-          git commit -m "Update script to ${TAG_NAME} for release" || echo "No changes to commit"
-          # El “|| echo …” permite que el paso no falle si no hubo cambios (por ejemplo si ya estaba igual)
+          if git commit -m "Update script to ${TAG_NAME} for release"; then
+            echo "✅ Commit creado exitosamente"
+          else
+            echo "⚠️  No hay cambios para hacer commit (el archivo ya estaba actualizado)"
+          fi
 
       - name: Push changes
         run: |
           # Enviar el commit al repositorio remoto, a la rama principal
-          git push origin HEAD:main
+          echo "📤 Enviando cambios a la rama main..."
+          if git push origin HEAD:main; then
+            echo "✅ Cambios enviados exitosamente"
+          else
+            echo "❌ Error al hacer push. Verifica que tengas permisos y que la rama main no esté protegida."
+            exit 1
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v2.4.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Token automático para autenticarse
         with:
-          tag_name: ${{ github.ref_name }}  # El tag bajo el cual se crea el release
-          name: Skip Intro and Next Chapter Buttons ${{ github.ref_name }}  # Nombre del release
+          tag_name: ${{ inputs.tag_name }}  # El tag bajo el cual se crea el release
+          name: Skip Intro Buttons ${{ inputs.tag_name }}  # Nombre del release
           draft: false
           prerelease: false
           files: userscript/Skip-Intro-and-Next-Chapter-Buttons.js  # Incluir el archivo modificado como asset
+          generate_release_notes: true  # Generar notas de release automáticamente
