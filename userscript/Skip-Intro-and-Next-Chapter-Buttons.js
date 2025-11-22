@@ -6,8 +6,8 @@
 // @author       Mundomangua
 // @match        https://www.mundodonghua.com/*
 // @match        https://www.dailymotion.com/*
-// @downloadURL  https://github.com/URD0TH/mundomangua/releases/download/v0.4.10/Skip-Intro-and-Next-Chapter-Buttons.js
-// @updateURL    https://github.com/URD0TH/mundomangua/releases/download/v0.4.10/Skip-Intro-and-Next-Chapter-Buttons.js
+// @downloadURL  https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+// @updateURL    https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 // @grant        none
 // @run-at       document-idle
 // ==/UserScript==

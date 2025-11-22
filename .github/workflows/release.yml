@@ -62,13 +62,14 @@ jobs:
           TAG_NAME=${{ inputs.tag_name }}
           # Obtener la versión sin la "v" inicial, ej. "1.2.3"
           VERSION=${TAG_NAME#v}
-          # Construir la URL donde estará disponible el script como asset del release
-          DOWNLOAD_URL="https://github.com/URD0TH/mundomangua/releases/download/${TAG_NAME}/Skip-Intro-and-Next-Chapter-Buttons.js"
+          # Usar URL raw de GitHub para que Tampermonkey pueda detectar actualizaciones
+          # El archivo en main siempre estará actualizado porque el workflow hace commit antes del release
+          DOWNLOAD_URL="https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js"
 
           echo "📝 Actualizando metadata del script..."
           echo "   Tag: $TAG_NAME"
           echo "   Versión: $VERSION"
-          echo "   URL: $DOWNLOAD_URL"
+          echo "   URL (raw para Tampermonkey): $DOWNLOAD_URL"
 
           # Modificar dentro del script las líneas de metadata:
           # @version, @downloadURL y @updateURL con los valores calculados
