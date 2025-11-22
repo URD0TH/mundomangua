@@ -12,7 +12,7 @@
 // @run-at       document-idle
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     // --- Banner to indicate script is loaded ---
@@ -35,7 +35,7 @@
         } else {
             document.addEventListener('DOMContentLoaded', () => document.body.appendChild(banner));
         }
-    } catch(e) {
+    } catch (e) {
         console.warn('[Skip/Next] banner failed', e);
     }
 
@@ -115,6 +115,7 @@
         skipButton.addEventListener('click', (e) => {
             e.stopPropagation();
             video.currentTime = SKIP_TIME_SECONDS;
+            video.play(); // Reproduce automáticamente después de saltar la intro
         });
 
         const nextChapterUrl = findNextChapterLink();
