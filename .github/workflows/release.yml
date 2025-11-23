@@ -33,14 +33,23 @@ jobs:
 
       - name: Configure git user
         run: |
-          # Configura usuario para los commits automáticos (formato recomendado por GitHub)
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
-      - name: Create tag if requested
-        if: ${{ inputs.create_tag }}
+      - name: Determine Tag Name
+        id: get_tag
         run: |
-          TAG_NAME=${{ inputs.tag_name }}
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "TAG_NAME=${{ inputs.tag_name }}" >> $GITHUB_ENV
+            echo "IS_MANUAL=true" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "IS_MANUAL=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create tag if requested (Manual only)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_tag }}
+        run: |
           # Verificar si el tag ya existe
           if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             echo "⚠️  El tag $TAG_NAME ya existe"
@@ -52,8 +61,7 @@ jobs:
 
       - name: Verify tag exists
         run: |
-          TAG_NAME=${{ inputs.tag_name }}
-          # Verificar que el tag existe (ya sea porque se creó o porque ya existía)
+          # Verificar que el tag existe
           if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             echo "❌ Error: El tag $TAG_NAME no existe. Usa la opción 'create_tag' para crearlo."
             exit 1
@@ -62,18 +70,15 @@ jobs:
 
       - name: Update script metadata
         run: |
-          # Usar el tag del input en lugar de github.ref_name
-          TAG_NAME=${{ inputs.tag_name }}
-          # Obtener la versión sin la "v" inicial, ej. "1.2.3"
+          # Obtener la versión sin la "v" inicial
           VERSION=${TAG_NAME#v}
-          # Usar URL raw de GitHub para que Tampermonkey pueda detectar actualizaciones
-          # El archivo en main siempre estará actualizado porque el workflow hace commit antes del release
+          # URL raw para Tampermonkey
           DOWNLOAD_URL="https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js"
 
-          echo "📝 Actualizando metadata del script..."
+          echo "📝 Actualizando metadata..."
           echo "   Tag: $TAG_NAME"
           echo "   Versión: $VERSION"
-          echo "   URL (raw para Tampermonkey): $DOWNLOAD_URL"
+          echo "   URL: $DOWNLOAD_URL"
 
           # Modificar dentro del script las líneas de metadata:
           # @version, @downloadURL y @updateURL con los valores calculados
@@ -81,54 +86,26 @@ jobs:
           sed -i "s|// @downloadURL  .*|// @downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
           sed -i "s|// @updateURL    .*|// @updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 
-          # Validar que los cambios se aplicaron correctamente
-          echo ""
-          echo "🔍 Validando cambios aplicados..."
-          if grep -q "// @version      ${VERSION}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
-            echo "✅ @version actualizado correctamente"
-          else
-            echo "❌ Error: No se pudo actualizar @version"
+          # Validaciones
+          if ! grep -q "// @version      ${VERSION}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
+            echo "❌ Error al actualizar @version"
             exit 1
           fi
-
-          if grep -q "// @downloadURL  ${DOWNLOAD_URL}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
-            echo "✅ @downloadURL actualizado correctamente"
-          else
-            echo "❌ Error: No se pudo actualizar @downloadURL"
+          if ! grep -q "// @downloadURL  ${DOWNLOAD_URL}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
+            echo "❌ Error al actualizar @downloadURL"
             exit 1
           fi
-
-          if grep -q "// @updateURL    ${DOWNLOAD_URL}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
-            echo "✅ @updateURL actualizado correctamente"
-          else
-            echo "❌ Error: No se pudo actualizar @updateURL"
-            exit 1
-          fi
-
-          echo ""
-          echo "✅ Todas las validaciones pasaron exitosamente"
+          echo "✅ Metadata actualizada correctamente"
 
       - name: Commit updated script
         run: |
-          TAG_NAME=${{ inputs.tag_name }}
-          # Añadir el archivo modificado al staging
           git add userscript/Skip-Intro-and-Next-Chapter-Buttons.js
-          # Hacer commit con el mensaje que indica la versión del tag
           if git commit -m "Update script to ${TAG_NAME} for release"; then
-            echo "✅ Commit creado exitosamente"
+            echo "✅ Commit creado"
+            echo "📤 Enviando cambios a main..."
+            git push origin HEAD:main
           else
-            echo "⚠️  No hay cambios para hacer commit (el archivo ya estaba actualizado)"
-          fi
-
-      - name: Push changes
-        run: |
-          # Enviar el commit al repositorio remoto, a la rama principal
-          echo "📤 Enviando cambios a la rama main..."
-          if git push origin HEAD:main; then
-            echo "✅ Cambios enviados exitosamente"
-          else
-            echo "❌ Error al hacer push. Verifica que tengas permisos y que la rama main no esté protegida."
-            exit 1
+            echo "⚠️  Sin cambios para commit"
           fi
 
       - name: Create Release
@@ -136,9 +113,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Token automático para autenticarse
         with:
-          tag_name: ${{ inputs.tag_name }}  # El tag bajo el cual se crea el release
-          name: Skip Intro Buttons ${{ inputs.tag_name }}  # Nombre del release
+          tag_name: ${{ env.TAG_NAME }}
+          name: Skip Intro Buttons ${{ env.TAG_NAME }}
           draft: false
           prerelease: false
-          files: userscript/Skip-Intro-and-Next-Chapter-Buttons.js  # Incluir el archivo modificado como asset
-          generate_release_notes: true  # Generar notas de release automáticamente
+          files: userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          generate_release_notes: true
