@@ -167,6 +167,22 @@
         console.log('[Skip/Next] Buttons attached to video.');
     }
 
+    function selectAsuraPlayer() {
+        const asuraTab = document.querySelector('a[href="#asura"]');
+        if (asuraTab) {
+            // Verificar si ya está activo (opcional, pero bueno para evitar clics innecesarios)
+            // En este sitio parece que no añaden una clase "active" obvia al <a>, 
+            // pero hacer clic de nuevo no debería dañar nada.
+            console.log('[Skip/Next] Seleccionando reproductor Asura...');
+            asuraTab.click();
+        }
+    }
+
+    // Intentar seleccionar Asura al inicio
+    selectAsuraPlayer();
+    // Reintentar brevemente después por si carga dinámicamente
+    setTimeout(selectAsuraPlayer, 1000);
+
     function findAndInitializeVideos() {
         document.querySelectorAll('video').forEach(initializeButtonsForVideo);
     }

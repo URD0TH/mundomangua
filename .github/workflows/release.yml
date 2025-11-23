@@ -1,6 +1,10 @@
 name: Release Userscript
 
 on:
+  push:
+    tags:
+      - 'v*' # cualquier tag que empiece con “v”
+
   workflow_dispatch:  # Ejecución manual desde la UI de GitHub
     inputs:
       tag_name:
