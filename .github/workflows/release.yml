@@ -73,7 +73,7 @@ jobs:
           # Obtener la versión sin la "v" inicial
           VERSION=${TAG_NAME#v}
           # URL raw para Tampermonkey
-          DOWNLOAD_URL="https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js"
+          DOWNLOAD_URL="https://github.com/URD0TH/mundomangua/releases/latest/download/Skip-Intro-and-Next-Chapter-Buttons.user.js"
 
           echo "📝 Actualizando metadata..."
           echo "   Tag: $TAG_NAME"
@@ -83,15 +83,15 @@ jobs:
           # Modificar dentro del script las líneas de metadata:
           # @version, @downloadURL y @updateURL con los valores calculados
           sed -i "s|// @version      .*|// @version      ${VERSION}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
-          sed -i "s|// @downloadURL  .*|// @downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
-          sed -i "s|// @updateURL    .*|// @updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          sed -i "s|// @downloadURL  .*|// @downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js
+          sed -i "s|// @updateURL    .*|// @updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js
 
           # Validaciones
-          if ! grep -q "// @version      ${VERSION}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
+          if ! grep -q "// @version      ${VERSION}" userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js; then
             echo "❌ Error al actualizar @version"
             exit 1
           fi
-          if ! grep -q "// @downloadURL  ${DOWNLOAD_URL}" userscript/Skip-Intro-and-Next-Chapter-Buttons.js; then
+          if ! grep -q "// @downloadURL  ${DOWNLOAD_URL}" userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js; then
             echo "❌ Error al actualizar @downloadURL"
             exit 1
           fi
@@ -99,7 +99,7 @@ jobs:
 
       - name: Commit updated script
         run: |
-          git add userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          git add userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js
           if git commit -m "Update script to ${TAG_NAME} for release"; then
             echo "✅ Commit creado"
             echo "📤 Enviando cambios a main..."
@@ -117,5 +117,5 @@ jobs:
           name: Skip Intro Buttons ${{ env.TAG_NAME }}
           draft: false
           prerelease: false
-          files: userscript/Skip-Intro-and-Next-Chapter-Buttons.js
+          files: userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js
           generate_release_notes: true
