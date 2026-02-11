@@ -1,9 +1,12 @@
 // ==UserScript==
 // @name         Skip Intro & Next Chapter Buttons
 // @namespace    https://github.com/URD0TH/mundomangua
-// @version      0.4.11.hf01
+// @version      0.4.11.hf02
 // @description  Añade botones para saltar la intro y para ir al siguiente capítulo.
-// @author       Mundomangua
+// @author       URD0TH
+// @homepage     https://github.com/URD0TH/mundomangua
+// @homepageURL  https://github.com/URD0TH/mundomangua
+// @supportURL   https://github.com/URD0TH/mundomangua/issues
 // @match        https://www.mundodonghua.com/*
 // @downloadURL  https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 // @updateURL    https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js
