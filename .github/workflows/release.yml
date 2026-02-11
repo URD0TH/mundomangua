@@ -72,29 +72,48 @@ jobs:
         run: |
           # Obtener la versión sin la "v" inicial
           VERSION=${TAG_NAME#v}
-          # URL raw para Tampermonkey
-          DOWNLOAD_URL="https://github.com/URD0TH/mundomangua/releases/latest/download/Skip-Intro-and-Next-Chapter-Buttons.user.js"
+          
+          # URLs para metadata (mantenemos DOWNLOAD_URL por referencia)
+          DOWNLOAD_URL="https://github.com/URD0TH/mundomangua/raw/refs/heads/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js"
+          RELEASE_URL="https://github.com/URD0TH/mundomangua/releases/latest/download/Skip-Intro-and-Next-Chapter-Buttons.user.js"
 
           echo "📝 Actualizando metadata..."
           echo "   Tag: $TAG_NAME"
           echo "   Versión: $VERSION"
-          echo "   URL: $DOWNLOAD_URL"
+          echo "   Release URL: $RELEASE_URL"
+
+          # El archivo real es .user.js
+          FILE="userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js"
+
+          if [ ! -f "$FILE" ]; then
+            echo "❌ Error: El archivo $FILE no existe."
+            exit 1
+          fi
 
           # Modificar dentro del script las líneas de metadata:
-          # @version, @downloadURL y @updateURL con los valores calculados
-          sed -i "s|// @version      .*|// @version      ${VERSION}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.js
-          sed -i "s|// @downloadURL  .*|// @downloadURL  ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js
-          sed -i "s|// @updateURL    .*|// @updateURL    ${DOWNLOAD_URL}|" userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js
+          # @version, @downloadURL y @updateURL usando Release_URL
+          sed -i "s|// @version      .*|// @version      ${VERSION}|" "$FILE"
+          sed -i "s|// @downloadURL  .*|// @downloadURL  ${RELEASE_URL}|" "$FILE"
+          sed -i "s|// @updateURL    .*|// @updateURL    ${RELEASE_URL}|" "$FILE"
 
           # Validaciones
-          if ! grep -q "// @version      ${VERSION}" userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js; then
+          echo "🔍 Validando cambios en metadata..."
+          
+          if ! grep -q "// @version      ${VERSION}" "$FILE"; then
             echo "❌ Error al actualizar @version"
             exit 1
           fi
-          if ! grep -q "// @downloadURL  ${DOWNLOAD_URL}" userscript/Skip-Intro-and-Next-Chapter-Buttons.user.js; then
+          
+          if ! grep -q "// @downloadURL  ${RELEASE_URL}" "$FILE"; then
             echo "❌ Error al actualizar @downloadURL"
             exit 1
           fi
+
+          if ! grep -q "// @updateURL    ${RELEASE_URL}" "$FILE"; then
+            echo "❌ Error al actualizar @updateURL"
+            exit 1
+          fi
+
           echo "✅ Metadata actualizada correctamente"
 
       - name: Commit updated script
