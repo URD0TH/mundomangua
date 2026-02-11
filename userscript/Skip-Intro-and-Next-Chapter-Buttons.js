@@ -5,7 +5,6 @@
 // @description  Añade botones para saltar la intro y para ir al siguiente capítulo.
 // @author       Mundomangua
 // @match        https://www.mundodonghua.com/*
-// @match        https://www.dailymotion.com/*
 // @downloadURL  https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 // @updateURL    https://raw.githubusercontent.com/URD0TH/mundomangua/main/userscript/Skip-Intro-and-Next-Chapter-Buttons.js
 // @grant        none
